@@ -34,9 +34,6 @@ class FtpSyncPlugin implements ISyncPlugin {
                 process.stdout.clearLine(0);
                 process.stdout.write(`\r[${data.transferredFileCount}/${data.totalFilesCount}] Uploading ${data.filename}...`);
             })
-            .on("uploaded", () => {
-                process.stdout.write(` Done.`);
-            });
 
         await ftpDeploy.deploy(deployConf);
         process.stdout.write('\n');

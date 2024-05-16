@@ -1,10 +1,11 @@
+import { write } from 'bun';
 import fs from 'node:fs'
 import path from 'node:path'
 import config, { isConfigKey } from './config';
 import { type Either, ok, fail } from './util/either';
 import execute from './util/execute';
-import { getSyncPlugin } from './sync-plugin';
 import getProtocol from './util/protocol';
+import { getSyncPlugin } from './sync-plugin';
 
 
 export const INIT_ERRORS = {
@@ -62,7 +63,8 @@ export async function launchSpecifier(specifier: string): Promise<Either<void, L
     if (syncPlugin === undefined) {
         return fail(LAUNCH_SPECIFIER_ERRORS.E_NO_SYNC_PLUGIN);
     }
-    
+
+    // Convert 'latest' specifier to a tag
     if (specifier === 'latest') {
         specifier = await execute({
             script: 'get-latest-tag',
@@ -83,13 +85,21 @@ export async function launchSpecifier(specifier: string): Promise<Either<void, L
         quiet: true,
     });
 
+    // Get the launch hash and save it in the working tree
+    const launchHash = await execute({
+        script: 'get-launch-hash',
+        quiet: true,
+    })
+    await write(path.join(config.lunarbase, '.launch-hash'), launchHash);
+
+    // Prepare and launch!
     const destinationFilepath = `${config.destination}/${specifier}`;
     const prepared = await syncPlugin.prepare(destinationFilepath);
     if (!prepared) {
         return fail(LAUNCH_SPECIFIER_ERRORS.E_PREPARATION);
     }
 
-    console.log(`🚀 Launching '${specifier}' from lunarbase to destination '${config.destination}...'`)
+    console.log(`🚀 Launching '${specifier} [${launchHash.slice(0, 8)}]' from lunarbase to destination '${config.destination}...'`)
     await syncPlugin.sync(config.lunarbase, destinationFilepath);
     console.log(`🎉 Launch was successful!`)
     
