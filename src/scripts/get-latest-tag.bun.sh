@@ -1,0 +1,1 @@
+git tag --sort=-version:refname -l "v[0-9][0-9].[0-9][0-9].[0-9].[0-9]" | head -1
