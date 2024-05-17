@@ -89,11 +89,12 @@ export async function launchSpecifier(specifier: string): Promise<Either<void, L
     const launchHash = await execute({
         script: 'get-launch-hash',
         quiet: true,
-    })
-    await write(path.join(config.lunarbase, '.launch-hash'), launchHash);
+    });
+    const launchData = `${specifier}\n${launchHash}`;
+    await write(path.join(config.lunarbase, '.launch'), launchData);
 
     // Prepare and launch!
-    const destinationFilepath = `${config.destination}/${specifier}`;
+    const destinationFilepath = `${config.destination}`;
     const prepared = await syncPlugin.prepare(destinationFilepath);
     if (!prepared) {
         return fail(LAUNCH_SPECIFIER_ERRORS.E_PREPARATION);
